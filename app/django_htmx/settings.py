@@ -9,9 +9,15 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
+import sys
 
+from dotenv import load_dotenv
+import os
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
+
+load_dotenv()
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,14 +25,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-v)$r0#l#(6fw3%b9n1(z69eoz@9xmrfs0dx4d=#ip+_7x9tcj6'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -39,7 +37,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'books',
-    'rosetta'
 ]
 
 MIDDLEWARE = [
@@ -80,8 +77,12 @@ WSGI_APPLICATION = 'django_htmx.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': str(os.getenv('SQL_ENGINE')),
+        'NAME': str(os.getenv('SQL_DATABASE')),
+        'USER': str(os.getenv('SQL_USER')),
+        'PASSWORD': str(os.getenv('SQL_PASSWORD')),
+        'HOST': str(os.getenv('SQL_HOST')),
+        'PORT': str(os.getenv('SQL_PORT')),
     }
 }
 
@@ -128,16 +129,29 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+if sys.argv[1] == 'runserver':
+    STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static'),]
+else:
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+SECRET_KEY = str(os.getenv('SECRET_KEY'))
+
+DEBUG = os.getenv('DEBUG') == 'True'
+
+ALLOWED_HOSTS = str(os.getenv('DJANGO_ALLOWED_HOSTS')).split(' ')
+
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
-        'LOCATION': '127.0.0.1:11211',
+        'BACKEND': str(os.getenv('CACHES_BACKEND')),
+        'LOCATION': str(os.getenv('CACHES_LOCATION')),
     }
 }
+
+INTERNAL_IPS = str(os.getenv('INTERNAL_IPS')).split(' ')
+
+CSRF_TRUSTED_ORIGINS = str(os.getenv('CSRF_TRUSTED_ORIGINS')).split(' ')

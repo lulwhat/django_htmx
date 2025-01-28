@@ -1,0 +1,52 @@
+# project name
+name: django-htmx-prod
+
+services:
+  web:
+    # directory containing Dockerfile
+    build:
+      context: ./app
+      dockerfile: Dockerfile.prod
+    # start gunicorn server
+    command: gunicorn django_htmx.wsgi:application --bind 0.0.0.0:8000
+    # forward container port 8000 for localhost 8000 port
+    ports:
+      - 127.0.0.1:8000:8000
+    volumes:
+      - static-data:/home/app/web/static
+    env_file:
+      - .env.prod
+    # wait for DB container up
+    depends_on:
+      - db
+      - memcached
+
+  db:
+    # use Postgres image ver. 17
+    image: postgres:17
+    # mount postgres-data to dir /var/lib/postgresql@17/data of DB container
+    volumes:
+      - postgres-data:/var/lib/postgresql@17/data
+    env_file:
+      - .env.prod
+    environment:
+      - POSTGRES_USER=${SQL_USER}
+      - POSTGRES_PASSWORD=${SQL_PASSWORD}
+      - POSTGRES_DB=${SQL_DATABASE}
+
+  memcached:
+    image: memcached:1.6.34
+
+  nginx:
+    build: ./nginx
+    volumes:
+      - static-data:/home/app/web/static
+    ports:
+      - 80:80
+    depends_on:
+      - web
+
+volumes:
+  # declare postgres-data volume for storing Postgres data
+  postgres-data:
+  static-data:
